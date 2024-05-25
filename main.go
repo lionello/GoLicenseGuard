@@ -200,6 +200,7 @@ func main() {
 	}
 
 	// Step 3: Check for license compatibility
+	var issues int
 	for importPath, p := range byImportPath {
 		lic, _ := p.findLicense()
 		if strings.Contains(lic, "AGPL") {
@@ -217,10 +218,15 @@ func main() {
 			if strings.Contains(depLic, "AGPL") {
 				if !found {
 					fmt.Printf("%s licensed package %s using packages:\n", lic, importPath)
+					issues++
 				}
 				found = true
 				fmt.Printf("  imports %s (%s)\n", pkg, depLic)
 			}
 		}
+	}
+
+	if issues > 0 {
+		os.Exit(1)
 	}
 }
