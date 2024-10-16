@@ -148,8 +148,8 @@ type Package struct {
 }
 
 // getPackageDependencies returns a list of dependencies for the current module, including their paths and directories
-func getPackageDependencies() ([]Package, error) {
-	out, err := exec.Command("go", "list", "-deps", "-json").Output()
+func getPackageDependencies(entryPath string) ([]Package, error) {
+	out, err := exec.Command("go", "list", "-deps", "-json", entryPath).Output()
 	if err != nil {
 		return nil, err
 	}
@@ -169,8 +169,13 @@ func getPackageDependencies() ([]Package, error) {
 }
 
 func main() {
+	entryPath := "."
+	if len(os.Args) > 1 {
+		entryPath = os.Args[1]
+	}
+
 	// Step 1: Get the list of dependencies
-	deps, err := getPackageDependencies()
+	deps, err := getPackageDependencies(entryPath)
 	if err != nil {
 		panic(err)
 	}
