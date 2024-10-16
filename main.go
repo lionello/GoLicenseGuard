@@ -149,20 +149,31 @@ type Package struct {
 
 // getPackageDependencies returns a list of dependencies for the current module, including their paths and directories
 func getPackageDependencies(entryPath string) ([]Package, error) {
-	out, err := exec.Command("go", "list", "-deps", "-json", entryPath).Output()
-	if err != nil {
-		return nil, err
-	}
+	out, _ := exec.Command("go", "list", "-deps", "-json", entryPath).Output()
+	// go list can return valid output even if there is an error
 
-	decoder := json.NewDecoder(strings.NewReader(string(out)))
+	output := string(out)
+
+	decoder := json.NewDecoder(strings.NewReader(output))
 	var packages []Package
 
+	var err error
 	for {
 		var mod Package
-		if err := decoder.Decode(&mod); err != nil {
-			break
+		err = decoder.Decode(&mod)
+		if err != nil {
+			if err.Error() == "EOF" {
+				err = nil
+				break
+			} else {
+				fmt.Fprintf(os.Stderr, "Error decoding JSON: %v\n", err)
+			}
 		}
 		packages = append(packages, mod)
+	}
+
+	if err != nil {
+		fmt.Fprint(os.Stderr, output)
 	}
 
 	return packages, nil
