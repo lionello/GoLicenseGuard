@@ -195,6 +195,7 @@ func main() {
 	byImportPath := map[ImportPath]*Package{}
 	depOf := map[ImportPath][]ImportPath{}
 	importOf := map[ImportPath][]ImportPath{}
+	licenses := map[ImportPath]string{}
 
 	for _, dep := range deps {
 		// make a copy of dep on the heap
@@ -216,14 +217,10 @@ func main() {
 	}
 
 	// Step 3: Check for license compatibility
-	var issues int
 	for importPath, p := range byImportPath {
 		lic, _ := p.findLicense()
-		if strings.Contains(lic, "AGPL") {
-			continue
-		}
+		licenses[importPath] = lic
 
-		var found bool
 		for _, imp := range p.Imports {
 			pkg := normalizeImportPath(imp)
 			p := byImportPath[pkg]
@@ -231,14 +228,16 @@ func main() {
 				continue
 			}
 			depLic, _ := p.findLicense()
-			if strings.Contains(depLic, "AGPL") {
-				if !found {
-					fmt.Printf("%s licensed package %s using packages:\n", lic, importPath)
-					issues++
-				}
-				found = true
-				fmt.Printf("  imports %s (%s)\n", pkg, depLic)
-			}
+			licenses[pkg] = depLic
+		}
+	}
+
+	// Step 4: report GPL issues
+	var issues int
+	for importPath, lic := range licenses {
+		fmt.Println(lic, "\t", importPath)
+		if strings.Contains(lic, "AGPL") {
+			issues++
 		}
 	}
 
