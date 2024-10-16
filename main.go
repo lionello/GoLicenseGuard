@@ -90,14 +90,14 @@ func (p *Package) findLicense() (string, error) {
 		// Look for a LICENSE* file in the package directory (or parents) instead
 		licenseFile, err := findLicenseFileUp(p.Dir)
 		if err != nil {
-			return "", errors.Wrapf(err, "finding license file for %s", p.ImportPath)
+			return "Unknown", errors.Wrapf(err, "finding license file for %s", p.ImportPath)
 		}
 
 		licenseId = licenseIdCache[licenseFile]
 		if licenseId == "" { // not in cache
 			licenseId, err = ReadLicenseFile(licenseFile)
 			if err != nil {
-				return "", err
+				return "Unknown", err
 			}
 			licenseIdCache[licenseFile] = licenseId
 		}
